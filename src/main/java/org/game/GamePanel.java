@@ -15,18 +15,20 @@ public class GamePanel extends JPanel implements ActionListener {
 
     static final int DELAY = 70;
 
-    final int x[] = new int[GAME_UNITS];
-    final int y[] = new int[GAME_UNITS];
+    final int[] x = new int[GAME_UNITS];
+    final int[] y = new int[GAME_UNITS];
 
     int bodyParts = 4;
     int foodEaten;
     int foodX;
     int foodY;
 
-    char direction = 'R';
+    char direction;
     boolean running = false;
     Timer timer;
     Random random;
+
+    JButton tryAgainButton;
 
     GamePanel(){
         random = new Random();
@@ -34,14 +36,36 @@ public class GamePanel extends JPanel implements ActionListener {
         this.setBackground(Color.getHSBColor(0.58f, 0.35f, 0.13f));
         this.setFocusable(true);
         this.addKeyListener(new MyKeyAdapter());
+
+        tryAgainButton = new RoundedButton("TRY AGAIN");
+        tryAgainButton.setFont(new Font("OptimusPrinceps", Font.PLAIN, 20));
+        tryAgainButton.setFocusable(false);
+        tryAgainButton.setVisible(false);
+        tryAgainButton.addActionListener(e -> resetGame());
+
+        this.setLayout(null);
+        tryAgainButton.setBounds((SCREEN_WIDTH - 180) / 2, SCREEN_HEIGHT / 2 + 60, 180, 40);
+        this.add(tryAgainButton);
+
         startGame();
     }
 
     public void startGame() {
-        newFood();
+        bodyParts = 4;
+        foodEaten = 0;
+        direction = 'R';
         running = true;
+
+        for (int i = 0; i < bodyParts; i++) {
+            x[i] = 0;
+            y[i] = 0;
+        }
+
+        newFood();
         timer = new Timer(DELAY, this);
         timer.start();
+
+        tryAgainButton.setVisible(false);
     }
 
     public void paintComponent(Graphics g) {
@@ -57,10 +81,6 @@ public class GamePanel extends JPanel implements ActionListener {
         g2d.setColor(Color.getHSBColor(0.58f, 0.43f, 0.09f));
 
         if(running) {
-//            for(int i = 0; i < SCREEN_HEIGHT / UNIT_SIZE; i++) {
-//                g2d.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
-//                g2d.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
-//            }
 
             g2d.setColor(Color.getHSBColor(0.41f, 1.00f, 0.78f));
             g2d.fillRoundRect(foodX, foodY, UNIT_SIZE, UNIT_SIZE, 20, 20);
@@ -122,18 +142,21 @@ public class GamePanel extends JPanel implements ActionListener {
     public void checkCollisions() {
         // body collision
         for(int i = bodyParts; i > 0; i--) {
-            if((x[0] == x[i]) && (y[0] == y[i])) {
+            if ((x[0] == x[i]) && (y[0] == y[i])) {
                 running = false;
+                break;
             }
         }
-
         // border collision
         if(x[0] < 0) running = false;
-        if(x[0] > SCREEN_WIDTH) running = false;
+        if(x[0] >= SCREEN_WIDTH) running = false;
         if(y[0] < 0) running = false;
-        if(y[0] > SCREEN_HEIGHT) running = false;
+        if(y[0] >= SCREEN_HEIGHT) running = false;
 
-        if(!running) timer.stop();
+        if(!running) {
+            timer.stop();
+            tryAgainButton.setVisible(true);
+        }
     }
 
     public void gameOver(Graphics2D g2d) {
@@ -146,6 +169,10 @@ public class GamePanel extends JPanel implements ActionListener {
         g2d.setFont(new Font("OptimusPrinceps", Font.PLAIN, 75));
         FontMetrics metrics2 = getFontMetrics(g2d.getFont());
         g2d.drawString("YOU DIED", (SCREEN_WIDTH - metrics2.stringWidth("YOU DIED")) / 2, SCREEN_HEIGHT / 2);
+    }
+
+    public void resetGame() {
+        startGame();
     }
 
     @Override
